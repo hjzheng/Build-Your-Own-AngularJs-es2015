@@ -22,11 +22,11 @@ class Lexer {
 		while (this.index < this.text.length) {
 			this.ch = this.text.charAt(this.index);
 			if (this.isNumber(this.ch) ||
-				(this.ch === '.' && this.isNumber(this.peek()))) {
+				(this.is('.') && this.isNumber(this.peek()))) {
 				this.readNumber();
-			} else if (this.ch === '\'' || this.ch === '"') {
+			} else if (this.is('\'"')) {
 				this.readString(this.ch);
-			} else if (this.ch === '[' || this.ch === ']' || this.ch === ',') {
+			} else if (this.is('[],{}:')) {
 				this.tokens.push({
 					text: this.ch
 				});
@@ -149,7 +149,10 @@ class Lexer {
 			}
 			this.index++;
 		}
-		var token = {text: text};
+		var token = {
+			text: text,
+			identifier: true
+		};
 		this.tokens.push(token);
 	}
 
@@ -193,6 +196,8 @@ class AST {
 	primary() {
 		if (this.expect('[')) {
 			return this.arrayDeclaration();
+		} else if (this.expect('{')) {
+			return this.object();
 		} else if (this.constants.hasOwnProperty(this.tokens[0].text)) {
 			return this.constants[this.consume().text];
 		} else {
@@ -239,11 +244,37 @@ class AST {
 			return this.tokens.shift();
 		}
 	}
+
+	object() {
+		var properties = [];
+		if (!this.peek('}')) {
+			do {
+				var property = {type: AST.Property};
+				if (this.peek().identifier) {
+					property.key = this.identifier();
+				} else {
+					property.key = this.constant();
+				}
+				this.consume(':');
+				property.value = this.primary();
+				properties.push(property);
+			} while (this.expect(','));
+		}
+		this.consume('}');
+		return {type: AST.ObjectExpression, properties: properties};
+	};
+
+	identifier() {
+		return {type: AST.Identifier, name: this.consume().text};
+	};
 }
 
 AST.Program = 'Program';
 AST.Literal = 'Literal';
 AST.ArrayExpression = 'ArrayExpression';
+AST.ObjectExpression = 'ObjectExpression';
+AST.Property = 'Property';
+AST.Identifier = 'Identifier';
 
 // 实现第三步中的 AST Compiler (抽象语法树编译程序)
 class ASTCompiler {
@@ -276,10 +307,17 @@ class ASTCompiler {
 					return this.recurse(element);
 				}, this));
 				return '[' + elements.join(',') + ']';
+			case AST.ObjectExpression:
+				var properties = _.map(ast.properties, _.bind(function (property) {
+					var key = property.key.type === AST.Identifier ? property.key.name : this.escape(property.key.value);
+					var value = this.recurse(property.value);
+					return key + ':' + value;
+				}, this));
+				return '{' + properties.join(',') + '}';
 		}
 	}
 
-	// 如果是 string 加上单引号
+	// 如果是 string 加上单引号 并转义特殊字符, 例如汉字等
 	escape(value) {
 		if (_.isString(value)) {
 			return '\'' +
