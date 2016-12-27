@@ -26,8 +26,15 @@ class Lexer {
 				this.readNumber();
 			} else if (this.ch === '\'' || this.ch === '"') {
 				this.readString(this.ch);
+			} else if (this.ch === '[' || this.ch === ']' || this.ch === ',') {
+				this.tokens.push({
+					text: this.ch
+				});
+				this.index++;
 			} else if (this.isIdent(this.ch)) {
 				this.readIdent();
+			} else if (this.isWhitespace(this.ch)) {
+				this.index++;
 			} else {
 				throw new Error('Unexpected next character: ' + this.ch);
 			}
@@ -145,6 +152,14 @@ class Lexer {
 		var token = {text: text};
 		this.tokens.push(token);
 	}
+
+	isWhitespace(ch) {
+		return ch === ' ' || ch === '\r' || ch === '\t' || ch === '\n' || ch === '\v' || ch === '\u00A0'; // '\u00A0' 是空字符
+	}
+
+	is(chs) {
+		return chs.indexOf(this.ch) >= 0;
+	}
 }
 
 // 实现第二步中的 AST builder (抽象语法树构建程序)
@@ -162,6 +177,7 @@ class AST {
 
 	ast(text) {
 		this.tokens = this.lexer.lex(text);
+		// console.log(JSON.stringify(this.tokens));
 		// AST building will be done here
 		return this.program();
 	}
@@ -171,20 +187,63 @@ class AST {
 	}
 
 	constant() {
-		return {type: AST.Literal, value: this.tokens[0].value};
+		return {type: AST.Literal, value: this.consume().value};
 	}
 
 	primary() {
-		if (this.constants.hasOwnProperty(this.tokens[0].text)) {
-			return this.constants[this.tokens[0].text];
+		if (this.expect('[')) {
+			return this.arrayDeclaration();
+		} else if (this.constants.hasOwnProperty(this.tokens[0].text)) {
+			return this.constants[this.consume().text];
 		} else {
 			return this.constant();
+		}
+	}
+
+	peek(e) {
+		if (this.tokens.length > 0) {
+			var text = this.tokens[0].text;
+			if (text === e || !e) {
+				return this.tokens[0];
+			}
+		}
+	}
+
+	arrayDeclaration() {
+		var elements = [];
+		if (!this.peek(']')) {
+			do {
+				if (this.peek(']')) {
+					break;
+				}
+				elements.push(this.primary());
+			} while (this.expect(','));
+		}
+		this.consume(']');
+		return {type: AST.ArrayExpression, elements: elements};
+	}
+
+	// 与 expect 作用一样, 抛出异常, 例如 数组如果不以 [ 结尾的话, 抛出异常
+	consume(e) {
+		var token = this.expect(e);
+		if (!token) {
+			throw new Error('Unexpected. Expecting: ' + e);
+		}
+		return token;
+	}
+
+	// 删除特定的 token, 例如数组需要删除 [ , ]
+	expect(e) {
+		var token = this.peek(e);
+		if (token) {
+			return this.tokens.shift();
 		}
 	}
 }
 
 AST.Program = 'Program';
 AST.Literal = 'Literal';
+AST.ArrayExpression = 'ArrayExpression';
 
 // 实现第三步中的 AST Compiler (抽象语法树编译程序)
 class ASTCompiler {
@@ -198,6 +257,7 @@ class ASTCompiler {
 	compile(text) {
 		// AST compilation will be done here
 		var ast = this.astBuilder.ast(text);
+		// console.log(JSON.stringify(ast));
 		this.state = {body: []};
 		this.recurse(ast);
 
@@ -211,6 +271,11 @@ class ASTCompiler {
 				break;
 			case AST.Literal:
 				return this.escape(ast.value);
+			case AST.ArrayExpression:
+				var elements = _.map(ast.elements, _.bind(function (element) {
+					return this.recurse(element);
+				}, this));
+				return '[' + elements.join(',') + ']';
 		}
 	}
 
