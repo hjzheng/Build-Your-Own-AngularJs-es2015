@@ -6,6 +6,16 @@
  *  step 3: from AST to Expression Function: AST Compiler
  * */
 
+/**
+ * 数组 Tokens -> AST
+ * '[{"text":"["},{"text":"1","value":1},{"text":","},{"text":"two","value":"two"},{"text":","},{"text":"["},{"text":"3","value":3},{"text":"]"},{"text":","},{"text":"true","identifier":true},{"text":"]"}]'
+ * '{"type":"Program","body":{"type":"ArrayExpression","elements":[{"type":"Literal","value":1},{"type":"Literal","value":"two"},{"type":"ArrayExpression","elements":[{"type":"Literal","value":3}]},{"type":"Literal","value":true}]}}'
+ *
+ * 对象 Tokens -> AST
+ * '[{"text":"{"},{"text":"a","identifier":true},{"text":":"},{"text":"1","value":1},{"text":","},{"text":"b","identifier":true},{"text":":"},{"text":"["},{"text":"2","value":2},{"text":","},{"text":"3","value":3},{"text":"]"},{"text":","},{"text":"c","identifier":true},{"text":":"},{"text":"{"},{"text":"d","identifier":true},{"text":":"},{"text":"4","value":4},{"text":"}"},{"text":"}"}]'
+ * '{"type":"Program","body":{"type":"ObjectExpression","properties":[{"type":"Property","key":{"type":"Identifier","name":"a"},"value":{"type":"Literal","value":1}},{"type":"Property","key":{"type":"Identifier","name":"b"},"value":{"type":"ArrayExpression","elements":[{"type":"Literal","value":2},{"type":"Literal","value":3}]}},{"type":"Property","key":{"type":"Identifier","name":"c"},"value":{"type":"ObjectExpression","properties":[{"type":"Property","key":{"type":"Identifier","name":"d"},"value":{"type":"Literal","value":4}}]}}]}}'
+ * */
+
 import _ from 'lodash';
 
 var ESCAPES = {'n': '\n', 'f': '\f', 'r': '\r', 't': '\t',
@@ -171,7 +181,8 @@ class AST {
 	constants = {
 		'null': {type: AST.Literal, value: null},
 		'true': {type: AST.Literal, value: true},
-		'false': {type: AST.Literal, value: false}
+		'false': {type: AST.Literal, value: false},
+		'this': {type: AST.ThisExpression}
 	}
 
 	constructor(lexer) {
@@ -200,6 +211,8 @@ class AST {
 			return this.object();
 		} else if (this.constants.hasOwnProperty(this.tokens[0].text)) {
 			return this.constants[this.consume().text];
+		} else if (this.peek().identifier) {
+			return this.identifier();
 		} else {
 			return this.constant();
 		}
@@ -275,6 +288,7 @@ AST.ArrayExpression = 'ArrayExpression';
 AST.ObjectExpression = 'ObjectExpression';
 AST.Property = 'Property';
 AST.Identifier = 'Identifier';
+AST.ThisExpression = 'ThisExpression';
 
 // 实现第三步中的 AST Compiler (抽象语法树编译程序)
 class ASTCompiler {
@@ -289,10 +303,11 @@ class ASTCompiler {
 		// AST compilation will be done here
 		var ast = this.astBuilder.ast(text);
 		// console.log(JSON.stringify(ast));
-		this.state = {body: []};
+		this.state = {body: [], nextId: 0, vars: []};
 		this.recurse(ast);
 
-		return new Function(this.state.body.join(''));
+		return new Function('s',
+			(this.state.vars.length ? 'var ' + this.state.vars.join(',') + ';' : '') + this.state.body.join(''));
 	}
 
 	recurse(ast) {
@@ -314,6 +329,12 @@ class ASTCompiler {
 					return key + ':' + value;
 				}, this));
 				return '{' + properties.join(',') + '}';
+			case AST.Identifier:
+				var intoId = this.nextId();
+				this.if_('s', this.assign(intoId, this.nonComputedMember('s', ast.name)));
+				return intoId;
+			case AST.ThisExpression:
+				return 's';
 		}
 	}
 
@@ -333,7 +354,25 @@ class ASTCompiler {
 	// 转义其他字符
 	stringEscapeFn(c) {
 		return '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4);
-	};
+	}
+
+	nonComputedMember(left, right) {
+		return '(' + left + ').' + right;
+	}
+
+	if_(test, consequent) {
+		this.state.body.push('if(', test, '){', consequent, '}');
+	}
+
+	assign(id, value) {
+		return id + '=' + value + ';';
+	}
+
+	nextId() {
+		var id = 'v' + (this.state.nextId++);
+		this.state.vars.push(id);
+		return id;
+	}
 }
 
 // 将第二和第三步 放在一起
