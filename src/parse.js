@@ -182,7 +182,8 @@ class AST {
 		'null': {type: AST.Literal, value: null},
 		'true': {type: AST.Literal, value: true},
 		'false': {type: AST.Literal, value: false},
-		'this': {type: AST.ThisExpression}
+		'this': {type: AST.ThisExpression},
+		'$locals': {type: AST.LocalsExpression}
 	}
 
 	constructor(lexer) {
@@ -300,6 +301,7 @@ AST.Property = 'Property';
 AST.Identifier = 'Identifier';
 AST.ThisExpression = 'ThisExpression';
 AST.MemberExpression = 'MemberExpression';
+AST.LocalsExpression = 'LocalsExpression';
 
 // 实现第三步中的 AST Compiler (抽象语法树编译程序)
 class ASTCompiler {
@@ -317,7 +319,7 @@ class ASTCompiler {
 		this.state = {body: [], nextId: 0, vars: []};
 		this.recurse(ast);
 
-		return new Function('s',
+		return new Function('s', 'l',
 			(this.state.vars.length ? 'var ' + this.state.vars.join(',') + ';' : '') + this.state.body.join(''));
 	}
 
@@ -343,7 +345,10 @@ class ASTCompiler {
 				return '{' + properties.join(',') + '}';
 			case AST.Identifier:
 				intoId = this.nextId();
-				this.if_('s', this.assign(intoId, this.nonComputedMember('s', ast.name)));
+				this.if_(this.getHasOwnProperty('l', ast.name),
+					this.assign(intoId, this.nonComputedMember('l', ast.name)));
+				this.if_(this.not(this.getHasOwnProperty('l', ast.name)) + ' && s',
+					this.assign(intoId, this.nonComputedMember('s', ast.name)));
 				return intoId;
 			case AST.ThisExpression:
 				return 's';
@@ -353,6 +358,8 @@ class ASTCompiler {
 				this.if_(left,
 					this.assign(intoId, this.nonComputedMember(left, ast.property.name)));
 				return intoId;
+			case AST.LocalsExpression:
+				return 'l';
 		}
 	}
 
@@ -390,6 +397,14 @@ class ASTCompiler {
 		var id = 'v' + (this.state.nextId++);
 		this.state.vars.push(id);
 		return id;
+	}
+
+	not(e) {
+		return '!(' + e + ')';
+	}
+
+	getHasOwnProperty(object, property) {
+		return object + '&&(' + this.escape(property) + ' in ' + object + ')';
 	}
 }
 
