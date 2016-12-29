@@ -36,7 +36,7 @@ class Lexer {
 				this.readNumber();
 			} else if (this.is('\'"')) {
 				this.readString(this.ch);
-			} else if (this.is('[],{}:')) {
+			} else if (this.is('[],{}:.')) {
 				this.tokens.push({
 					text: this.ch
 				});
@@ -205,17 +205,27 @@ class AST {
 	}
 
 	primary() {
+		let primary;
 		if (this.expect('[')) {
-			return this.arrayDeclaration();
+			primary = this.arrayDeclaration();
 		} else if (this.expect('{')) {
-			return this.object();
+			primary = this.object();
 		} else if (this.constants.hasOwnProperty(this.tokens[0].text)) {
-			return this.constants[this.consume().text];
+			primary = this.constants[this.consume().text];
 		} else if (this.peek().identifier) {
-			return this.identifier();
+			primary = this.identifier();
 		} else {
-			return this.constant();
+			primary = this.constant();
 		}
+
+		while (this.expect('.')) {
+			primary = {
+				type: AST.MemberExpression,
+				object: primary,
+				property: this.identifier()
+			};
+		}
+		return primary;
 	}
 
 	peek(e) {
@@ -289,6 +299,7 @@ AST.ObjectExpression = 'ObjectExpression';
 AST.Property = 'Property';
 AST.Identifier = 'Identifier';
 AST.ThisExpression = 'ThisExpression';
+AST.MemberExpression = 'MemberExpression';
 
 // 实现第三步中的 AST Compiler (抽象语法树编译程序)
 class ASTCompiler {
@@ -311,6 +322,7 @@ class ASTCompiler {
 	}
 
 	recurse(ast) {
+		var intoId;
 		switch (ast.type) {
 			case AST.Program:
 				this.state.body.push('return ', this.recurse(ast.body), ';');
@@ -330,11 +342,17 @@ class ASTCompiler {
 				}, this));
 				return '{' + properties.join(',') + '}';
 			case AST.Identifier:
-				var intoId = this.nextId();
+				intoId = this.nextId();
 				this.if_('s', this.assign(intoId, this.nonComputedMember('s', ast.name)));
 				return intoId;
 			case AST.ThisExpression:
 				return 's';
+			case AST.MemberExpression:
+				intoId = this.nextId();
+				var left = this.recurse(ast.object);
+				this.if_(left,
+					this.assign(intoId, this.nonComputedMember(left, ast.property.name)));
+				return intoId;
 		}
 	}
 
