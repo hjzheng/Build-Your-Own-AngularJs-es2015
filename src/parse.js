@@ -219,20 +219,33 @@ class AST {
 			primary = this.constant();
 		}
 
-		while (this.expect('.')) {
-			primary = {
-				type: AST.MemberExpression,
-				object: primary,
-				property: this.identifier()
-			};
+		let next;
+		while ((next = this.expect('.', '['))) {
+			if (next.text === '[') {
+				primary = {
+					type: AST.MemberExpression,
+					object: primary,
+					property: this.primary(),
+					computed: true
+				};
+				this.consume(']');
+			} else {
+				primary = {
+					type: AST.MemberExpression,
+					object: primary,
+					property: this.identifier(),
+					computed: false
+				};
+			}
 		}
 		return primary;
 	}
 
-	peek(e) {
+	peek(e1, e2, e3, e4) {
 		if (this.tokens.length > 0) {
 			var text = this.tokens[0].text;
-			if (text === e || !e) {
+			if (text === e1 || text === e2 || text === e3 || text === e4 ||
+				(!e1 && !e2 && !e3 && !e4)) {
 				return this.tokens[0];
 			}
 		}
@@ -261,9 +274,9 @@ class AST {
 		return token;
 	}
 
-	// 删除特定的 token, 例如数组需要删除 [ , ]
-	expect(e) {
-		var token = this.peek(e);
+	// 删除特定的 token, 例如数组需要删除 [ , ], 支持多个参数
+	expect(e1, e2, e3, e4) {
+		var token = this.peek(e1, e2, e3, e4);
 		if (token) {
 			return this.tokens.shift();
 		}
@@ -355,8 +368,14 @@ class ASTCompiler {
 			case AST.MemberExpression:
 				intoId = this.nextId();
 				var left = this.recurse(ast.object);
-				this.if_(left,
-					this.assign(intoId, this.nonComputedMember(left, ast.property.name)));
+				if (ast.computed) {
+					var right = this.recurse(ast.property);
+					this.if_(left,
+						this.assign(intoId, this.computedMember(left, right)));
+				} else {
+					this.if_(left,
+						this.assign(intoId, this.nonComputedMember(left, ast.property.name)));
+				}
 				return intoId;
 			case AST.LocalsExpression:
 				return 'l';
@@ -405,6 +424,10 @@ class ASTCompiler {
 
 	getHasOwnProperty(object, property) {
 		return object + '&&(' + this.escape(property) + ' in ' + object + ')';
+	}
+
+	computedMember(left, right) {
+		return '(' + left + ')[' + right + ']';
 	}
 }
 
