@@ -36,7 +36,7 @@ class Lexer {
 				this.readNumber();
 			} else if (this.is('\'"')) {
 				this.readString(this.ch);
-			} else if (this.is('[],{}:.')) {
+			} else if (this.is('[],{}:.()')) {
 				this.tokens.push({
 					text: this.ch
 				});
@@ -220,7 +220,7 @@ class AST {
 		}
 
 		let next;
-		while ((next = this.expect('.', '['))) {
+		while ((next = this.expect('.', '[', '('))) {
 			if (next.text === '[') {
 				primary = {
 					type: AST.MemberExpression,
@@ -229,13 +229,20 @@ class AST {
 					computed: true
 				};
 				this.consume(']');
-			} else {
+			} else if (next.text === '.') {
 				primary = {
 					type: AST.MemberExpression,
 					object: primary,
 					property: this.identifier(),
 					computed: false
 				};
+			} else if (next.text === '(') {
+				primary = {
+					type: AST.CallExpression,
+					callee: primary,
+					arguments: this.parseArguments()
+				};
+				this.consume(')');
 			}
 		}
 		return primary;
@@ -299,11 +306,21 @@ class AST {
 		}
 		this.consume('}');
 		return {type: AST.ObjectExpression, properties: properties};
-	};
+	}
 
 	identifier() {
 		return {type: AST.Identifier, name: this.consume().text};
-	};
+	}
+
+	parseArguments() {
+		const args = [];
+		if (!this.peek(')')) {
+			do {
+				args.push(this.primary());
+			} while (this.expect(','));
+		}
+		return args;
+	}
 }
 
 AST.Program = 'Program';
@@ -315,6 +332,7 @@ AST.Identifier = 'Identifier';
 AST.ThisExpression = 'ThisExpression';
 AST.MemberExpression = 'MemberExpression';
 AST.LocalsExpression = 'LocalsExpression';
+AST.CallExpression = 'CallExpression';
 
 // 实现第三步中的 AST Compiler (抽象语法树编译程序)
 class ASTCompiler {
@@ -379,6 +397,12 @@ class ASTCompiler {
 				return intoId;
 			case AST.LocalsExpression:
 				return 'l';
+			case AST.CallExpression:
+				var callee = this.recurse(ast.callee);
+				var args = _.map(ast.arguments, _.bind(function (arg) {
+					return this.recurse(arg);
+				}, this));
+				return callee + '&&' + callee + '(' + args.join(',') + ')';
 		}
 	}
 

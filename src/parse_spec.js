@@ -1,6 +1,7 @@
 'use strict';
 
 import parse from './parse';
+import _ from 'lodash';
 
 describe('parse', () => {
 
@@ -212,5 +213,38 @@ describe('parse', () => {
 	it('parses computed access with another access as property', () => {
 		var fn = parse('lock[keys["aKey"]]');
 		expect(fn({keys: {aKey: 'theKey'}, lock: {theKey: 42}})).toBe(42);
+	});
+
+	// Function calls
+	it('parses a function call', () => {
+		var fn = parse('aFunction()');
+		expect(fn({aFunction: function () { return 42; }})).toBe(42);
+	});
+
+	it('parses a function call with a single number argument', () => {
+		var fn = parse('aFunction(42)');
+		expect(fn({aFunction: function (n) { return n; }})).toBe(42);
+	});
+
+	it('parses a function call with a single identifier argument', () => {
+		var fn = parse('aFunction(n)');
+		expect(fn({n: 42, aFunction: function (arg) { return arg; }})).toBe(42);
+	});
+
+	it('parses a function call with a single function call argument', () => {
+		var fn = parse('aFunction(argFn())');
+		expect(fn({
+			argFn: _.constant(42),
+			aFunction: function (arg) { return arg; }
+		})).toBe(42);
+	});
+
+	it('parses a function call with multiple arguments', () => {
+		var fn = parse('aFunction(37, n, argFn())');
+		expect(fn({
+			n: 3,
+			argFn: _.constant(2),
+			aFunction: function (a1, a2, a3) { return a1 + a2 + a3; }
+		})).toBe(42);
 	});
 });
