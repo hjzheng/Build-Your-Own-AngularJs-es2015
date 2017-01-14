@@ -59,7 +59,7 @@ module.exports = function (config) {
 				{type: 'json', subdir: '.'}
 			]
 		},
-		singleRun: true,
+		singleRun: false,
 		concurrency: Infinity
 	});
 };
