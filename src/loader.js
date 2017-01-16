@@ -12,12 +12,18 @@ function setupModuleLoader(window) {
 			throw new Error('hasOwnProperty is not a valid module name');
 		}
 
+		let invokeLater = function (method) {
+			return function () {
+				invokeQueue.push([method, arguments]);
+				return moduleInstance;
+			};
+		};
+
 		let moduleInstance = {
 			name,
 			requires,
-			constant(key, value) {
-				invokeQueue.push(['constant', [key, value]]);
-			},
+			constant: invokeLater('constant'),
+			provider: invokeLater('provider'),
 			_invokeQueue: invokeQueue
 		};
 		modules[name] = moduleInstance;

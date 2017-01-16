@@ -15,6 +15,9 @@ function createInjector(modulesToLoad, strictDi = false) {
 				throw new Error('hasOwnProperty is not valid constant name');
 			}
 			cache[key] = value;
+		},
+		provider(key, provider) {
+			cache[key] = provider.$get();
 		}
 	};
 
