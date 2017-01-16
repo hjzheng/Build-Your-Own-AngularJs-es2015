@@ -295,19 +295,19 @@ describe('injector', () => {
 		let instance = injector.instantiate(Type);
 		expect(instance.v).toBe(42);
 	});
-	//
-	// it('supports locals when instantiating', function() {
-	// 	var module = window.angular.module('myModule', []);
-	// 	module.constant('a', 1);
-	// 	module.constant('b', 2);
-	// 	var injector = createInjector(['myModule']);
-	//
-	// 	function Type(a, b) {
-	// 		this.result = a + b;
-	// 	}
-	//
-	// 	var instance = injector.instantiate(Type, {b: 3});
-	// 	expect(instance.result).toBe(4);
-	// });
+
+	it('supports locals when instantiating', () => {
+		let module = window.angular.module('myModule', []);
+		module.constant('a', 1);
+		module.constant('b', 2);
+		let injector = createInjector(['myModule']);
+
+		function Type(a, b) {
+			this.result = a + b;
+		}
+
+		let instance = injector.instantiate(Type, {b: 3});
+		expect(instance.result).toBe(4);
+	});
 
 });

@@ -55,10 +55,10 @@ function createInjector(modulesToLoad, strictDi = false) {
 		return fn.apply(self, args);
 	};
 
-	let instantiate = function (Fn) {
+	let instantiate = function (Fn, locals) {
 		var UnwrappedFn = _.isArray(Fn) ? _.last(Fn) : Fn;
 		var instance = Object.create(UnwrappedFn.prototype);
-		invoke(Fn, instance);
+		invoke(Fn, instance, locals);
 		return instance;
 	};
 
