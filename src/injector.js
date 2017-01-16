@@ -6,20 +6,9 @@ function createInjector(modulesToLoad, strictDi = false) {
 	let FN_ARG = /^\s*(_?)(\S+?)\1\s*$/;
 	let STRIP_COMMENTS = /(\/\/.*$)|(\/\*.*?\*\/)/mg;
 
-	let cache = {};
+	let instanceCache = {};
+	let providerCache = {};
 	let loadedModules = {};
-
-	let $provide = {
-		constant(key, value) {
-			if (key === 'hasOwnProperty') {
-				throw new Error('hasOwnProperty is not valid constant name');
-			}
-			cache[key] = value;
-		},
-		provider(key, provider) {
-			cache[key] = provider.$get();
-		}
-	};
 
 	let annotate = function (fn) {
 		if (fn.$inject) {
@@ -45,7 +34,7 @@ function createInjector(modulesToLoad, strictDi = false) {
 	let invoke = function (fn, self = null, locals = {}) {
 		let args = _.map(annotate(fn), token => {
 			if (_.isString(token)) {
-				return locals.hasOwnProperty(token) ? locals[token] : cache[token];
+				return locals.hasOwnProperty(token) ? locals[token] : getService(token);
 			} else {
 				throw new Error(`Incorrect injection token: Expected a string, got ${token}`);
 			}
@@ -56,6 +45,27 @@ function createInjector(modulesToLoad, strictDi = false) {
 		}
 
 		return fn.apply(self, args);
+	};
+
+	let $provide = {
+		constant(key, value) {
+			if (key === 'hasOwnProperty') {
+				throw new Error('hasOwnProperty is not valid constant name');
+			}
+			instanceCache[key] = value;
+		},
+		provider(key, provider) {
+			providerCache[key + 'Provider'] = provider;
+		}
+	};
+
+	let getService = function (key) {
+		if (instanceCache.hasOwnProperty(key)) {
+			return instanceCache[key];
+		} else if (providerCache.hasOwnProperty(key + 'Provider')) {
+			let provider = providerCache[key + 'Provider'];
+			return invoke(provider.$get, provider);
+		}
 	};
 
 	let instantiate = function (Fn, locals) {
@@ -81,11 +91,9 @@ function createInjector(modulesToLoad, strictDi = false) {
 
 	return {
 		has(key) {
-			return cache.hasOwnProperty(key);
+			return instanceCache.hasOwnProperty(key) || providerCache.hasOwnProperty(key + 'Provider');
 		},
-		get(key) {
-			return cache[key];
-		},
+		get: getService,
 		invoke,
 		annotate,
 		instantiate
