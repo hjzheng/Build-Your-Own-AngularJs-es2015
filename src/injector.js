@@ -9,6 +9,10 @@ function createInjector(modulesToLoad, strictDi = false) {
 	let instanceCache = {};
 	let providerCache = {};
 	let loadedModules = {};
+	// just a marker for INSTANTIATING's provider
+	let INSTANTIATING = {};
+	// record dependence path, when error happen, can easily decipher it.
+	let path = [];
 
 	let annotate = function (fn) {
 		if (fn.$inject) {
@@ -61,10 +65,23 @@ function createInjector(modulesToLoad, strictDi = false) {
 
 	let getService = function (key) {
 		if (instanceCache.hasOwnProperty(key)) {
+			if (instanceCache[key] === INSTANTIATING) {
+				throw new Error(`Circular dependency found: ${key} <- ${path.join(' <- ')}`);
+			}
 			return instanceCache[key];
 		} else if (providerCache.hasOwnProperty(key + 'Provider')) {
-			let provider = providerCache[key + 'Provider'];
-			return invoke(provider.$get, provider);
+			path.unshift(key);
+			instanceCache[key] = INSTANTIATING;
+			try {
+				let provider = providerCache[key + 'Provider'];
+				let instance = instanceCache[key] = invoke(provider.$get, provider);
+				return instance;
+			} finally {
+				path.shift();
+				if (instanceCache[key] === INSTANTIATING) {
+					delete instanceCache[key];
+				}
+			}
 		}
 	};
 
