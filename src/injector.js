@@ -51,6 +51,13 @@ function createInjector(modulesToLoad, strictDi = false) {
 		return fn.apply(self, args);
 	};
 
+	let instantiate = function (Fn, locals) {
+		var UnwrappedFn = _.isArray(Fn) ? _.last(Fn) : Fn;
+		var instance = Object.create(UnwrappedFn.prototype);
+		invoke(Fn, instance, locals);
+		return instance;
+	};
+
 	let $provide = {
 		constant(key, value) {
 			if (key === 'hasOwnProperty') {
@@ -59,6 +66,9 @@ function createInjector(modulesToLoad, strictDi = false) {
 			instanceCache[key] = value;
 		},
 		provider(key, provider) {
+			if (_.isFunction(provider)) {
+				provider = instantiate(provider);
+			}
 			providerCache[key + 'Provider'] = provider;
 		}
 	};
@@ -69,6 +79,8 @@ function createInjector(modulesToLoad, strictDi = false) {
 				throw new Error(`Circular dependency found: ${key} <- ${path.join(' <- ')}`);
 			}
 			return instanceCache[key];
+		} else if (providerCache.hasOwnProperty(key)) {
+			return providerCache[key];
 		} else if (providerCache.hasOwnProperty(key + 'Provider')) {
 			path.unshift(key);
 			instanceCache[key] = INSTANTIATING;
@@ -83,13 +95,6 @@ function createInjector(modulesToLoad, strictDi = false) {
 				}
 			}
 		}
-	};
-
-	let instantiate = function (Fn, locals) {
-		var UnwrappedFn = _.isArray(Fn) ? _.last(Fn) : Fn;
-		var instance = Object.create(UnwrappedFn.prototype);
-		invoke(Fn, instance, locals);
-		return instance;
 	};
 
 	_.forEach(modulesToLoad, function loadModule(moduleToLoad) {
