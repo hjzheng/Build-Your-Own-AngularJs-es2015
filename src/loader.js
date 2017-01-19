@@ -4,7 +4,7 @@ function setupModuleLoader(window) {
 		return obj[name] || (obj[name] = factory());
 	};
 
-	let createModule = function (name, requires, modules) {
+	let createModule = function (name, requires, modules, configFn) {
 
 		let invokeQueue = [];
 		let configBlock = [];
@@ -26,9 +26,19 @@ function setupModuleLoader(window) {
 			constant: invokeLater('$provide', 'constant', 'unshift'),
 			provider: invokeLater('$provide', 'provider'),
 			config: invokeLater('$injector', 'invoke', 'push', configBlock),
+			run(runFn) {
+				this._runBlock.push(runFn);
+				return this;
+			},
 			_invokeQueue: invokeQueue,
-			_configBlock: configBlock
+			_configBlock: configBlock,
+			_runBlock: []
 		};
+
+		if (configFn) {
+			moduleInstance.config(configFn);
+		}
+
 		modules[name] = moduleInstance;
 		return moduleInstance;
 	};
@@ -45,9 +55,9 @@ function setupModuleLoader(window) {
 
 	ensure(angular, 'module', () => {
 		let modules = {};
-		return function (name, requires) {
+		return function (name, requires, configFn) {
 			if (requires) {
-				return createModule(name, requires, modules);
+				return createModule(name, requires, modules, configFn);
 			} else {
 				return getModule(name, modules);
 			}

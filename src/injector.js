@@ -13,6 +13,20 @@
  *
  * 为 instanceCache 和 providerCache 添加 $injector 服务
  * 为 providerCache 添加 $provide 服务
+ *
+ * 为 module 增加 config 方法, 参考 loader.js 中的 config 模块, 注意 invokeLater 方法
+ * 以及后面的 config 如何配置 invokeLater 方法, 由于 config 是会被 providerCache 中的 $injector.invoke 方法调用,
+ * 因此, 在下面遍历 _configBlock _.forEach(module._configBlock, runInvokeQueue);
+ *
+ * 为 module 增加 run 方法, 注意 run 方法中的函数只能注入实例, 所以必须被 instanceCache 中的 $injector.invoke 方法调用
+ * 注意 run 方法必须在所有 module loader 加载完成后, 最后一并执行, 所以需要在 module loader 中将所有的 run 函数收集起来
+ *
+ * 支持函数式模块
+ * 函数式模块返回一个 run 方法
+ *
+ * 使用 Map 保证 函数式模块一次, 之前是对象字面量 key 不能是函数
+ *
+ * Factories
  * */
 
 import _ from 'lodash';
@@ -23,11 +37,14 @@ function createInjector(modulesToLoad, strictDi = false) {
 	let FN_ARG = /^\s*(_?)(\S+?)\1\s*$/;
 	let STRIP_COMMENTS = /(\/\/.*$)|(\/\*.*?\*\/)/mg;
 
-	let loadedModules = {};
+	let loadedModules = new Map();
 	// just a marker for INSTANTIATING's provider
 	let INSTANTIATING = {};
 	// record dependence path, when error happen, can easily decipher it.
 	let path = [];
+
+	// 用于收集所有的 runBlock
+	let runBlocks = [];
 
 	let providerCache = {};
 	let providerInjector = providerCache.$injector = createInternalInjector(providerCache, function () {
@@ -143,13 +160,25 @@ function createInjector(modulesToLoad, strictDi = false) {
 	}
 
 	_.forEach(modulesToLoad, function loadModule(moduleToLoad) {
-		if (!loadedModules.hasOwnProperty(moduleToLoad)) {
-			let module = window.angular.module(moduleToLoad);
-			loadedModules[moduleToLoad] = true;
-			_.forEach(module.requires, loadModule);
-			_.forEach(module._invokeQueue, runInvokeQueue);
-			_.forEach(module._configBlock, runInvokeQueue);
+		if (!loadedModules.has(moduleToLoad)) {
+			loadedModules.set(moduleToLoad, true);
+			if (_.isString(moduleToLoad)) {
+				let module = window.angular.module(moduleToLoad);
+				_.forEach(module.requires, loadModule);
+				_.forEach(module._invokeQueue, runInvokeQueue);
+				_.forEach(module._configBlock, runInvokeQueue);
+				// 收集所有的 runBlock
+				runBlocks.push(...module._runBlock);
+
+			} else if (_.isArray(moduleToLoad) || _.isFunction(moduleToLoad)) { // 支持函数式模块
+				runBlocks.push(providerCache.$injector.invoke(moduleToLoad));
+			}
 		}
+	});
+
+	// 所有 module load 完成后, 运行 runBlock 使用 _.compact 方法是因为 对于函数式模块如果不返回 run 的话, 将将它清除掉.
+	_.forEach(_.compact(runBlocks), fn => {
+		instanceCache.$injector.invoke(fn);
 	});
 
 	return instanceInjector;
