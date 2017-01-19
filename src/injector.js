@@ -135,16 +135,20 @@ function createInjector(modulesToLoad, strictDi = false) {
 		}
 	};
 
+	function runInvokeQueue(args) {
+		let serviceName = args[0];
+		let methodName = args[1];
+		let methodArgs = args[2];
+		providerCache[serviceName][methodName].apply(providerCache[serviceName], methodArgs);
+	}
+
 	_.forEach(modulesToLoad, function loadModule(moduleToLoad) {
 		if (!loadedModules.hasOwnProperty(moduleToLoad)) {
 			let module = window.angular.module(moduleToLoad);
 			loadedModules[moduleToLoad] = true;
 			_.forEach(module.requires, loadModule);
-			_.forEach(module._invokeQueue, args => {
-				let methodName = args[0];
-				let methodArgs = args[1];
-				providerCache.$provide[methodName].apply(providerCache.$provide, methodArgs);
-			});
+			_.forEach(module._invokeQueue, runInvokeQueue);
+			_.forEach(module._configBlock, runInvokeQueue);
 		}
 	});
 

@@ -7,14 +7,15 @@ function setupModuleLoader(window) {
 	let createModule = function (name, requires, modules) {
 
 		let invokeQueue = [];
+		let configBlock = [];
 
 		if (name === 'hasOwnProperty') {
 			throw new Error('hasOwnProperty is not a valid module name');
 		}
 
-		let invokeLater = function (method, arrayMethod) {
+		let invokeLater = function (service, method, arrayMethod, queue = invokeQueue) {
 			return function () {
-				invokeQueue[arrayMethod || 'push']([method, arguments]);
+				queue[arrayMethod || 'push']([service, method, arguments]);
 				return moduleInstance;
 			};
 		};
@@ -22,9 +23,11 @@ function setupModuleLoader(window) {
 		let moduleInstance = {
 			name,
 			requires,
-			constant: invokeLater('constant', 'unshift'),
-			provider: invokeLater('provider'),
-			_invokeQueue: invokeQueue
+			constant: invokeLater('$provide', 'constant', 'unshift'),
+			provider: invokeLater('$provide', 'provider'),
+			config: invokeLater('$injector', 'invoke', 'push', configBlock),
+			_invokeQueue: invokeQueue,
+			_configBlock: configBlock
 		};
 		modules[name] = moduleInstance;
 		return moduleInstance;
