@@ -10,6 +10,9 @@
  *
  * provider 为什么可以注入 provider constructor 因为 provider 将所有的 provider 放入 providerCache. 注意 $provide.provider 方法, 如果是 provider constructor 它已经调用 instantiate 方法
  * constant 为什么也可以注入 provider constructor 因为 constant 方法将注册的 constant 放入 providerCache. 注意 $provide.constant 方法
+ *
+ * 为 instanceCache 和 providerCache 添加 $injector 服务
+ * 为 providerCache 添加 $provide 服务
  * */
 
 import _ from 'lodash';
