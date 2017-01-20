@@ -34,6 +34,7 @@
  *
  * value 只需要将 value 包装成 function
  *
+ * service 将注册的函数, instanceCache.$injector.instantiate
  * */
 
 import _ from 'lodash';
@@ -173,6 +174,13 @@ function createInjector(modulesToLoad, strictDi = false) {
 		},
 		value(key, value) {
 			this.factory(key, _.constant(value), false);
+		},
+		service(key, service) {
+			this.factory(key, function () {
+				return instanceInjector.instantiate(service);
+			});
+			// instanceCache[key] = instanceInjector.instantiate(service);
+			// return instanceInjector;
 		}
 	};
 
