@@ -738,30 +738,30 @@ describe('injector', () => {
 
 		expect(injector.get('a')).toBe(injector.get('a'));
 	});
-	//
-	// it('forces a factory to return a value', function() {
-	// 	var module = window.angular.module('myModule', []);
-	//
-	// 	module.factory('a', function() {  });
-	// 	module.factory('b', function() { return null; });
-	//
-	// 	var injector = createInjector(['myModule']);
-	//
-	// 	expect(function() {
-	// 		injector.get('a');
-	// 	}).toThrow();
-	// 	expect(injector.get('b')).toBeNull();
-	// });
-	//
-	// it('allows registering a value', function() {
-	// 	var module = window.angular.module('myModule', []);
-	//
-	// 	module.value('a', 42);
-	//
-	// 	var injector = createInjector(['myModule']);
-	//
-	// 	expect(injector.get('a')).toBe(42);
-	// });
+
+	it('forces a factory to return a value', () => {
+		var module = window.angular.module('myModule', []);
+
+		module.factory('a', function () {});
+		module.factory('b', function () { return null; });
+
+		var injector = createInjector(['myModule']);
+
+		expect(function () {
+			injector.get('a');
+		}).toThrow();
+		expect(injector.get('b')).toBeNull();
+	});
+
+	it('allows registering a value', () => {
+		var module = window.angular.module('myModule', []);
+
+		module.value('a', 42);
+
+		var injector = createInjector(['myModule']);
+
+		expect(injector.get('a')).toBe(42);
+	});
 	//
 	// it('does not make values available to config blocks', function() {
 	// 	var module = window.angular.module('myModule', []);

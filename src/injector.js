@@ -27,6 +27,13 @@
  * 使用 Map 保证 函数式模块只 load 一次, 之前是对象字面量 key 不能是函数, 没办法处理.
  *
  * Factories
+ * factory 实际上是 provider 的 $get 方法, 实际上, 我们调用 provider 方法为它生产一个 provider (按照 AngularJS 理解)
+ * 事实上, 我们可以直接调用 instanceCache.$injector.invoke 方法直接调用, 进行初始化, 将其 keep 到 instanceCache 中
+ *
+ * factory 必须要有返回值, 因此需要将 factoryFn 进一步封装
+ *
+ * value 只需要将 value 包装成 function
+ *
  * */
 
 import _ from 'lodash';
@@ -135,6 +142,16 @@ function createInjector(modulesToLoad, strictDi = false) {
 
 	}
 
+	function enforceReturnValue(factory) {
+		return function () {
+			let value = instanceInjector.invoke(factory);
+			if (_.isUndefined(value)) {
+				throw new Error('factory must have a return value');
+			}
+			return value;
+		};
+	}
+
 	providerCache.$provide = {
 		constant(key, value) {
 			if (key === 'hasOwnProperty') {
@@ -150,8 +167,12 @@ function createInjector(modulesToLoad, strictDi = false) {
 			}
 			providerCache[key + 'Provider'] = provider;
 		},
-		factory(key, factory) {
-			providerCache[key + 'Provider'] = {$get: factory};
+		factory(key, factory, force = true) {
+			let fn = force ? enforceReturnValue(factory) : factory;
+			this.provider(key, {$get: fn});
+		},
+		value(key, value) {
+			this.factory(key, _.constant(value), false);
 		}
 	};
 
