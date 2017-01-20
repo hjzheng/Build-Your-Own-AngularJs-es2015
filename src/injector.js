@@ -24,7 +24,7 @@
  * 支持函数式模块
  * 函数式模块返回一个 run 方法
  *
- * 使用 Map 保证 函数式模块一次, 之前是对象字面量 key 不能是函数
+ * 使用 Map 保证 函数式模块只 load 一次, 之前是对象字面量 key 不能是函数, 没办法处理.
  *
  * Factories
  * */
@@ -149,6 +149,9 @@ function createInjector(modulesToLoad, strictDi = false) {
 				provider = providerInjector.instantiate(provider);
 			}
 			providerCache[key + 'Provider'] = provider;
+		},
+		factory(key, factory) {
+			providerCache[key + 'Provider'] = {$get: factory};
 		}
 	};
 

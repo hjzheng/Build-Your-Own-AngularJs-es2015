@@ -707,37 +707,37 @@ describe('injector', () => {
 
 		expect(loadedTimes).toBe(1);
 	});
-	//
-	// it('allows registering a factory', function() {
-	// 	var module = window.angular.module('myModule', []);
-	//
-	// 	module.factory('a', function() { return 42; });
-	//
-	// 	var injector = createInjector(['myModule']);
-	//
-	// 	expect(injector.get('a')).toBe(42);
-	// });
-	//
-	// it('injects a factory function with instances', function() {
-	// 	var module = window.angular.module('myModule', []);
-	//
-	// 	module.factory('a', function() { return 1; });
-	// 	module.factory('b', function(a) { return a + 2; });
-	//
-	// 	var injector = createInjector(['myModule']);
-	//
-	// 	expect(injector.get('b')).toBe(3);
-	// });
-	//
-	// it('only calls a factory function once', function() {
-	// 	var module = window.angular.module('myModule', []);
-	//
-	// 	module.factory('a', function() { return {}; });
-	//
-	// 	var injector = createInjector(['myModule']);
-	//
-	// 	expect(injector.get('a')).toBe(injector.get('a'));
-	// });
+
+	it('allows registering a factory', () => {
+		var module = window.angular.module('myModule', []);
+
+		module.factory('a', function () { return 42; });
+
+		var injector = createInjector(['myModule']);
+
+		expect(injector.get('a')).toBe(42);
+	});
+
+	it('injects a factory function with instances', () => {
+		var module = window.angular.module('myModule', []);
+
+		module.factory('a', function () { return 1; });
+		module.factory('b', function (a) { return a + 2; });
+
+		var injector = createInjector(['myModule']);
+
+		expect(injector.get('b')).toBe(3);
+	});
+
+	it('only calls a factory function once', () => {
+		var module = window.angular.module('myModule', []);
+
+		module.factory('a', function () { return {}; });
+
+		var injector = createInjector(['myModule']);
+
+		expect(injector.get('a')).toBe(injector.get('a'));
+	});
 	//
 	// it('forces a factory to return a value', function() {
 	// 	var module = window.angular.module('myModule', []);
