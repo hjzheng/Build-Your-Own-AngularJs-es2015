@@ -35,6 +35,8 @@
  * value 只需要将 value 包装成 function
  *
  * service 将注册的函数, instanceCache.$injector.instantiate
+ *
+ * decorator 装饰器
  * */
 
 import _ from 'lodash';
@@ -181,6 +183,17 @@ function createInjector(modulesToLoad, strictDi = false) {
 			});
 			// instanceCache[key] = instanceInjector.instantiate(service);
 			// return instanceInjector;
+		},
+		decorator(serviceName, decoratorFn) {
+			var provider = providerInjector.get(serviceName + 'Provider');
+			var original$get = provider.$get;
+			provider.$get = function () {
+				var instance = instanceInjector.invoke(original$get, provider);
+				// Modifications cations will be done here
+				// 为装饰器方法注入原 instance, 使用 $delegate
+				instanceInjector.invoke(decoratorFn, null, {$delegate: instance});
+				return instance;
+			};
 		}
 	};
 
