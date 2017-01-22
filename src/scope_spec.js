@@ -1,19 +1,21 @@
 import _ from 'lodash';
-import Scope from './scope';
+import publishExternalAPI from './angular_public';
+import createInjector from './injector';
 
 describe('Scope', () => {
 
-	it('can be constructed and used as an object', () => {
-		const scope = new Scope();
-		scope.aProperty = 1;
-		expect(scope.aProperty).toBe(1);
-	});
+	// it('can be constructed and used as an object', () => {
+	// 	const scope = new Scope();
+	// 	scope.aProperty = 1;
+	// 	expect(scope.aProperty).toBe(1);
+	// });
 
 	describe('digest', () => {
 		var scope;
 
 		beforeEach(() => {
-			scope = new Scope();
+			publishExternalAPI();
+			scope = createInjector(['ng']).get('$rootScope');
 		});
 
 		it('calls the listener function of a watch on first $digest', () => {

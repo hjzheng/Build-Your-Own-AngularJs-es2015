@@ -73,4 +73,12 @@ Scope.prototype.$$areEqual = function (newValue, oldValue, valueEq) {
 	}
 };
 
-export default Scope;
+// scope 并未完成, 基于现有代码, 改为 provider
+
+function $rootScopeProvider() {
+	this.$get = function () {
+		return new Scope();
+	};
+}
+
+export default $rootScopeProvider;
