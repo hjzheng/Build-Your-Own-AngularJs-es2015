@@ -29,6 +29,7 @@ function setupModuleLoader(window) {
 			value: invokeLater('$provide', 'value'),
 			service: invokeLater('$provide', 'service'),
 			decorator: invokeLater('$provide', 'decorator'),
+			directive: invokeLater('$compileProvider', 'directive'),
 			config: invokeLater('$injector', 'invoke', 'push', configBlock),
 			run(runFn) {
 				this._runBlock.push(runFn);

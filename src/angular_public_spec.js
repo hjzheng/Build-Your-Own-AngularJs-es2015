@@ -34,5 +34,10 @@ describe('angularPublic', () => {
 		expect(injector.has('$rootScope')).toBe(true);
 	});
 
-
+	// 第 16 章, 配置 $compile
+	it('sets up the $compile', () => {
+		publishExternalAPI();
+		var injector = createInjector(['ng']);
+		expect(injector.has('$compile')).toBe(true);
+	});
 });
