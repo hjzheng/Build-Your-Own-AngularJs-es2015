@@ -91,259 +91,259 @@ describe('$compile', () => {
 			expect(el.eq(1).data('idx')).toBe(2);
 		});
 	});
-	//
-	// it('compiles element directives from child elements', function() {
-	// 	var idx = 1;
-	// 	var injector = makeInjectorWithDirectives('myDirective', function() {
-	// 		return {
-	// 			restrict: 'EACM',
-	// 			compile: function(element) {
-	// 				element.data('dir', idx++);
-	// 			}
-	// 		};
-	// 	});
-	// 	injector.invoke(function($compile) {
-	// 		var el = $('<div><my-directive></my-directive></div>');
-	// 		$compile(el);
-	// 		expect(el.data('dir')).toBeUndefined();
-	// 		expect(el.find('> my-directive').data('dir')).toBe(1);
-	// 	});
-	// });
-	//
-	// it('compiles nested directives', function() {
-	// 	var idx = 1;
-	// 	var injector = makeInjectorWithDirectives('myDir', function() {
-	// 		return {
-	// 			restrict: 'EACM',
-	// 			compile: function(element) {
-	// 				element.data('dir', idx++);
-	// 			}
-	// 		};
-	// 	});
-	// 	injector.invoke(function($compile) {
-	// 		var el = $('<my-dir><my-dir><my-dir></my-dir></my-dir></my-dir>');
-	// 		$compile(el);
-	// 		expect(el.data('dir')).toBe(1);
-	// 		expect(el.find('> my-dir').data('dir')).toBe(2);
-	// 		expect(el.find('> my-dir > my-dir').data('dir')).toBe(3);
-	// 	});
-	// });
-	//
-	// _.forEach(['x', 'data'], function(prefix) {
-	// 	_.forEach([':', '-', '_'], function(delim) {
-	//
-	// 		it('compiles element directives with '+prefix+delim+' prefix', function() {
-	// 			var injector = makeInjectorWithDirectives('myDirective', function() {
-	// 				return {
-	// 					restrict: 'EACM',
-	// 					compile: function(element) {
-	// 						element.data('hasCompiled', true);
-	// 					}
-	// 				};
-	// 			});
-	// 			injector.invoke(function($compile) {
-	// 				var el = $('<'+prefix+delim+'my-directive></'+prefix+delim+'my-directive>');
-	// 				$compile(el);
-	// 				expect(el.data('hasCompiled')).toBe(true);
-	// 			});
-	// 		});
-	//
-	// 	});
-	// });
-	//
-	// it('compiles attribute directives', function() {
-	// 	var injector = makeInjectorWithDirectives('myDirective', function() {
-	// 		return {
-	// 			restrict: 'EACM',
-	// 			compile: function(element) {
-	// 				element.data('hasCompiled', true);
-	// 			}
-	// 		};
-	// 	});
-	// 	injector.invoke(function($compile) {
-	// 		var el = $('<div my-directive></div>');
-	// 		$compile(el);
-	// 		expect(el.data('hasCompiled')).toBe(true);
-	// 	});
-	// });
-	//
-	// it('compiles attribute directives with prefixes', function() {
-	// 	var injector = makeInjectorWithDirectives('myDirective', function() {
-	// 		return {
-	// 			restrict: 'EACM',
-	// 			compile: function(element) {
-	// 				element.data('hasCompiled', true);
-	// 			}
-	// 		};
-	// 	});
-	// 	injector.invoke(function($compile) {
-	// 		var el = $('<div x:my-directive></div>');
-	// 		$compile(el);
-	// 		expect(el.data('hasCompiled')).toBe(true);
-	// 	});
-	// });
-	//
-	// it('compiles several attribute directives in an element', function() {
-	// 	var injector = makeInjectorWithDirectives({
-	// 		myDirective: function() {
-	// 			return {
-	// 				restrict: 'EACM',
-	// 				compile: function(element) {
-	// 					element.data('hasCompiled', true);
-	// 				}
-	// 			};
-	// 		},
-	// 		mySecondDirective: function() {
-	// 			return {
-	// 				restrict: 'EACM',
-	// 				compile: function(element) {
-	// 					element.data('secondCompiled', true);
-	// 				}
-	// 			};
-	// 		}
-	// 	});
-	// 	injector.invoke(function($compile) {
-	// 		var el = $('<div my-directive my-second-directive></div>');
-	// 		$compile(el);
-	// 		expect(el.data('hasCompiled')).toBe(true);
-	// 		expect(el.data('secondCompiled')).toBe(true);
-	// 	});
-	// });
-	//
-	// it('compiles both element and attributes directives in an element', function() {
-	// 	var injector = makeInjectorWithDirectives({
-	// 		myDirective: function() {
-	// 			return {
-	// 				restrict: 'EACM',
-	// 				compile: function(element) {
-	// 					element.data('hasCompiled', true);
-	// 				}
-	// 			};
-	// 		},
-	// 		mySecondDirective: function() {
-	// 			return {
-	// 				restrict: 'EACM',
-	// 				compile: function(element) {
-	// 					element.data('secondCompiled', true);
-	// 				}
-	// 			};
-	// 		}
-	// 	});
-	// 	injector.invoke(function($compile) {
-	// 		var el = $('<my-directive my-second-directive></my-directive>');
-	// 		$compile(el);
-	// 		expect(el.data('hasCompiled')).toBe(true);
-	// 		expect(el.data('secondCompiled')).toBe(true);
-	// 	});
-	// });
-	//
-	// it('compiles attribute directives with ng-attr prefix', function() {
-	// 	var injector = makeInjectorWithDirectives('myDirective', function() {
-	// 		return {
-	// 			restrict: 'EACM',
-	// 			compile: function(element) {
-	// 				element.data('hasCompiled', true);
-	// 			}
-	// 		};
-	// 	});
-	// 	injector.invoke(function($compile) {
-	// 		var el = $('<div ng-attr-my-directive></div>');
-	// 		$compile(el);
-	// 		expect(el.data('hasCompiled')).toBe(true);
-	// 	});
-	// });
-	//
-	// it('compiles attribute directives with data:ng-attr prefix', function() {
-	// 	var injector = makeInjectorWithDirectives('myDirective', function() {
-	// 		return {
-	// 			restrict: 'EACM',
-	// 			compile: function(element) {
-	// 				element.data('hasCompiled', true);
-	// 			}
-	// 		};
-	// 	});
-	// 	injector.invoke(function($compile) {
-	// 		var el = $('<div data:ng-attr-my-directive></div>');
-	// 		$compile(el);
-	// 		expect(el.data('hasCompiled')).toBe(true);
-	// 	});
-	// });
-	//
-	// it('compiles class directives', function() {
-	// 	var injector = makeInjectorWithDirectives('myDirective', function() {
-	// 		return {
-	// 			restrict: 'EACM',
-	// 			compile: function(element) {
-	// 				element.data('hasCompiled', true);
-	// 			}
-	// 		};
-	// 	});
-	// 	injector.invoke(function($compile) {
-	// 		var el = $('<div class="my-directive"></div>');
-	// 		$compile(el);
-	// 		expect(el.data('hasCompiled')).toBe(true);
-	// 	});
-	// });
-	//
-	// it('compiles several class directives in an element', function() {
-	// 	var injector = makeInjectorWithDirectives({
-	// 		myDirective: function() {
-	// 			return {
-	// 				restrict: 'EACM',
-	// 				compile: function(element) {
-	// 					element.data('hasCompiled', true);
-	// 				}
-	// 			};
-	// 		},
-	// 		mySecondDirective: function() {
-	// 			return {
-	// 				restrict: 'EACM',
-	// 				compile: function(element) {
-	// 					element.data('secondCompiled', true);
-	// 				}
-	// 			};
-	// 		}
-	// 	});
-	// 	injector.invoke(function($compile) {
-	// 		var el = $('<div class="my-directive my-second-directive unrelated-class"></div>');
-	// 		$compile(el);
-	// 		expect(el.data('hasCompiled')).toBe(true);
-	// 		expect(el.data('secondCompiled')).toBe(true);
-	// 	});
-	// });
-	//
-	// it('compiles class directives with prefixes', function() {
-	// 	var injector = makeInjectorWithDirectives('myDirective', function() {
-	// 		return {
-	// 			restrict: 'EACM',
-	// 			compile: function(element) {
-	// 				element.data('hasCompiled', true);
-	// 			}
-	// 		};
-	// 	});
-	// 	injector.invoke(function($compile) {
-	// 		var el = $('<div class="x-my-directive"></div>');
-	// 		$compile(el);
-	// 		expect(el.data('hasCompiled')).toBe(true);
-	// 	});
-	// });
-	//
-	// it('compiles comment directives', function() {
-	// 	var hasCompiled;
-	// 	var injector = makeInjectorWithDirectives('myDirective', function() {
-	// 		return {
-	// 			restrict: 'EACM',
-	// 			compile: function(element) {
-	// 				hasCompiled = true;
-	// 			}
-	// 		};
-	// 	});
-	// 	injector.invoke(function($compile) {
-	// 		var el = $('<!-- directive: my-directive -->');
-	// 		$compile(el);
-	// 		expect(hasCompiled).toBe(true);
-	// 	});
-	// });
+
+	it('compiles element directives from child elements', () => {
+		var idx = 1;
+		var injector = makeInjectorWithDirectives('myDirective', () => {
+			return {
+				restrict: 'EACM',
+				compile: function (element) {
+					element.data('dir', idx++);
+				}
+			};
+		});
+		injector.invoke(function ($compile) {
+			var el = $('<div><my-directive></my-directive></div>');
+			$compile(el);
+			expect(el.data('dir')).toBeUndefined();
+			expect(el.find('> my-directive').data('dir')).toBe(1);
+		});
+	});
+
+	it('compiles nested directives', () => {
+		var idx = 1;
+		var injector = makeInjectorWithDirectives('myDir', function () {
+			return {
+				restrict: 'EACM',
+				compile: function (element) {
+					element.data('dir', idx++);
+				}
+			};
+		});
+		injector.invoke(function ($compile) {
+			var el = $('<my-dir><my-dir><my-dir></my-dir></my-dir></my-dir>');
+			$compile(el);
+			expect(el.data('dir')).toBe(1);
+			expect(el.find('> my-dir').data('dir')).toBe(2);
+			expect(el.find('> my-dir > my-dir').data('dir')).toBe(3);
+		});
+	});
+
+	_.forEach(['x', 'data'], prefix => {
+		_.forEach([':', '-', '_'], delim => {
+
+			it('compiles element directives with ' + prefix + delim + ' prefix', function () {
+				var injector = makeInjectorWithDirectives('myDirective', function () {
+					return {
+						restrict: 'EACM',
+						compile: function (element) {
+							element.data('hasCompiled', true);
+						}
+					};
+				});
+				injector.invoke(function ($compile) {
+					var el = $('<' + prefix + delim + 'my-directive></' + prefix + delim + 'my-directive>');
+					$compile(el);
+					expect(el.data('hasCompiled')).toBe(true);
+				});
+			});
+
+		});
+	});
+
+	it('compiles attribute directives', () => {
+		var injector = makeInjectorWithDirectives('myDirective', function () {
+			return {
+				restrict: 'EACM',
+				compile: function (element) {
+					element.data('hasCompiled', true);
+				}
+			};
+		});
+		injector.invoke(function ($compile) {
+			var el = $('<div my-directive></div>');
+			$compile(el);
+			expect(el.data('hasCompiled')).toBe(true);
+		});
+	});
+
+	it('compiles attribute directives with prefixes', () => {
+		var injector = makeInjectorWithDirectives('myDirective', function () {
+			return {
+				restrict: 'EACM',
+				compile: function (element) {
+					element.data('hasCompiled', true);
+				}
+			};
+		});
+		injector.invoke(function ($compile) {
+			var el = $('<div x:my-directive></div>');
+			$compile(el);
+			expect(el.data('hasCompiled')).toBe(true);
+		});
+	});
+
+	it('compiles several attribute directives in an element', () => {
+		var injector = makeInjectorWithDirectives({
+			myDirective: function () {
+				return {
+					restrict: 'EACM',
+					compile: function (element) {
+						element.data('hasCompiled', true);
+					}
+				};
+			},
+			mySecondDirective: function () {
+				return {
+					restrict: 'EACM',
+					compile: function (element) {
+						element.data('secondCompiled', true);
+					}
+				};
+			}
+		});
+		injector.invoke(function ($compile) {
+			var el = $('<div my-directive my-second-directive></div>');
+			$compile(el);
+			expect(el.data('hasCompiled')).toBe(true);
+			expect(el.data('secondCompiled')).toBe(true);
+		});
+	});
+
+	it('compiles both element and attributes directives in an element', () => {
+		var injector = makeInjectorWithDirectives({
+			myDirective: function () {
+				return {
+					restrict: 'EACM',
+					compile: function (element) {
+						element.data('hasCompiled', true);
+					}
+				};
+			},
+			mySecondDirective: function () {
+				return {
+					restrict: 'EACM',
+					compile: function (element) {
+						element.data('secondCompiled', true);
+					}
+				};
+			}
+		});
+		injector.invoke(function ($compile) {
+			var el = $('<my-directive my-second-directive></my-directive>');
+			$compile(el);
+			expect(el.data('hasCompiled')).toBe(true);
+			expect(el.data('secondCompiled')).toBe(true);
+		});
+	});
+
+	it('compiles attribute directives with ng-attr prefix', () => {
+		var injector = makeInjectorWithDirectives('myDirective', function () {
+			return {
+				restrict: 'EACM',
+				compile: function (element) {
+					element.data('hasCompiled', true);
+				}
+			};
+		});
+		injector.invoke(function ($compile) {
+			var el = $('<div ng-attr-my-directive></div>');
+			$compile(el);
+			expect(el.data('hasCompiled')).toBe(true);
+		});
+	});
+
+	it('compiles attribute directives with data:ng-attr prefix', () => {
+		var injector = makeInjectorWithDirectives('myDirective', function () {
+			return {
+				restrict: 'EACM',
+				compile: function (element) {
+					element.data('hasCompiled', true);
+				}
+			};
+		});
+		injector.invoke(function ($compile) {
+			var el = $('<div data:ng-attr-my-directive></div>');
+			$compile(el);
+			expect(el.data('hasCompiled')).toBe(true);
+		});
+	});
+
+	it('compiles class directives', () => {
+		var injector = makeInjectorWithDirectives('myDirective', () => {
+			return {
+				restrict: 'EACM',
+				compile: function (element) {
+					element.data('hasCompiled', true);
+				}
+			};
+		});
+		injector.invoke(function ($compile) {
+			var el = $('<div class="my-directive"></div>');
+			$compile(el);
+			expect(el.data('hasCompiled')).toBe(true);
+		});
+	});
+
+	it('compiles several class directives in an element', () => {
+		var injector = makeInjectorWithDirectives({
+			myDirective: function () {
+				return {
+					restrict: 'EACM',
+					compile: function (element) {
+						element.data('hasCompiled', true);
+					}
+				};
+			},
+			mySecondDirective: function () {
+				return {
+					restrict: 'EACM',
+					compile: function (element) {
+						element.data('secondCompiled', true);
+					}
+				};
+			}
+		});
+		injector.invoke(function ($compile) {
+			var el = $('<div class="my-directive my-second-directive unrelated-class"></div>');
+			$compile(el);
+			expect(el.data('hasCompiled')).toBe(true);
+			expect(el.data('secondCompiled')).toBe(true);
+		});
+	});
+
+	it('compiles class directives with prefixes', () => {
+		var injector = makeInjectorWithDirectives('myDirective', function () {
+			return {
+				restrict: 'EACM',
+				compile: function (element) {
+					element.data('hasCompiled', true);
+				}
+			};
+		});
+		injector.invoke(function ($compile) {
+			var el = $('<div class="x-my-directive"></div>');
+			$compile(el);
+			expect(el.data('hasCompiled')).toBe(true);
+		});
+	});
+
+	it('compiles comment directives', () => {
+		var hasCompiled;
+		var injector = makeInjectorWithDirectives('myDirective', function () {
+			return {
+				restrict: 'EACM',
+				compile: function (element) {
+					hasCompiled = true;
+				}
+			};
+		});
+		injector.invoke(function ($compile) {
+			var el = $('<!-- directive: my-directive -->');
+			$compile(el);
+			expect(hasCompiled).toBe(true);
+		});
+	});
 	//
 	// _.forEach({
 	// 	E:    {element: true,  attribute: false, class: false, comment: false},
