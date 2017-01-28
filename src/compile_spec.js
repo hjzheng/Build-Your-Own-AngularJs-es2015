@@ -73,24 +73,24 @@ describe('$compile', () => {
 			expect(el.data('hasCompiled')).toBe(true);
 		});
 	});
-	//
-	// it('compiles element directives found from several elements', () => {
-	// 	var idx = 1;
-	// 	var injector = makeInjectorWithDirectives('myDirective', function () {
-	// 		return {
-	// 			restrict: 'EACM',
-	// 			compile: function (element) {
-	// 				element.data('idx', idx++);
-	// 			}
-	// 		};
-	// 	});
-	// 	injector.invoke(function ($compile) {
-	// 		var el = $('<my-directive></my-directive><my-directive></my-directive>');
-	// 		$compile(el);
-	// 		expect(el.eq(0).data('idx')).toBe(1);
-	// 		expect(el.eq(1).data('idx')).toBe(2);
-	// 	});
-	// });
+
+	it('compiles element directives found from several elements', () => {
+		var idx = 1;
+		var injector = makeInjectorWithDirectives('myDirective', function () {
+			return {
+				restrict: 'EACM',
+				compile: function (element) {
+					element.data('idx', idx++);
+				}
+			};
+		});
+		injector.invoke(function ($compile) {
+			var el = $('<my-directive></my-directive><my-directive></my-directive>');
+			$compile(el);
+			expect(el.eq(0).data('idx')).toBe(1);
+			expect(el.eq(1).data('idx')).toBe(2);
+		});
+	});
 	//
 	// it('compiles element directives from child elements', function() {
 	// 	var idx = 1;
