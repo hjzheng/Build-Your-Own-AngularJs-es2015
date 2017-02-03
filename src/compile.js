@@ -55,6 +55,16 @@
  *
  * restrict 默认是 EA
  *
+ * 9.优先级 priority
+ * 收集的指令需要按照优先级进行排序
+ * 默认是 0
+ * 安装优先级执行 compile 方法, 数字越大优先级越高
+ *
+ * 排序规则
+ * 同一元素上的指令
+ * 优先级值高, 先执行
+ * 优先级相同, 比较指令名称
+ * 指令名称也相同, 按照指令注册先后排序
  * */
 import _ from 'lodash';
 import $ from 'jquery';
@@ -81,10 +91,15 @@ export default function $compileProvider($provide) {
 				hasDirectives[name] = [];
 				$provide.factory(name + 'Directive', ['$injector', function ($injector) {
 					let factories = hasDirectives[name];
-					return _.map(factories, factory => {
+					return _.map(factories, (factory, i) => {
 						let ddo = $injector.invoke(factory);
 						// restrict 默认值 'EA'
 						ddo.restrict = ddo.restrict || 'EA';
+						ddo.priority = ddo.priority || 0;
+
+						// 比较优先级有用到 name 和 注册的顺序
+						ddo.name = ddo.name || name;
+						ddo.index = i;
 						return ddo;
 					});
 				}]);
@@ -97,6 +112,19 @@ export default function $compileProvider($provide) {
 		}
 	};
 	this.$get = function ($injector) {
+		function byPriority(a, b) {
+			let diff = b.priority - a.priority;
+			if (diff === 0) {
+				if (a.name !== b.name) {
+					return (a.name < b.name ? -1 : 1);
+				} else {
+					return a.index - b.index;
+				}
+			} else {
+				return diff;
+			}
+		}
+
 		function compile($compileNodes) {
 			compileNodes($compileNodes);
 		}
@@ -142,6 +170,8 @@ export default function $compileProvider($provide) {
 					addDirectives(directives, directiveNormalize(match[1]), 'M');
 				}
 			}
+
+			directives.sort(byPriority);
 
 			return directives;
 		}
