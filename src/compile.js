@@ -49,6 +49,12 @@
  * <!-- directive: my-directive -->
  *
  * 8.Restricting Directives
+ * ECMA
+ *
+ * 在 addDirectives 方法中对 restrict 属性进行过滤
+ *
+ * restrict 默认是 EA
+ *
  * */
 import _ from 'lodash';
 import $ from 'jquery';
@@ -75,7 +81,12 @@ export default function $compileProvider($provide) {
 				hasDirectives[name] = [];
 				$provide.factory(name + 'Directive', ['$injector', function ($injector) {
 					let factories = hasDirectives[name];
-					return _.map(factories, $injector.invoke);
+					return _.map(factories, factory => {
+						let ddo = $injector.invoke(factory);
+						// restrict 默认值 'EA'
+						ddo.restrict = ddo.restrict || 'EA';
+						return ddo;
+					});
 				}]);
 			}
 			hasDirectives[name].push(directiveFactory);
@@ -106,7 +117,7 @@ export default function $compileProvider($provide) {
 			let directives = [];
 			if (node.nodeType === Node.ELEMENT_NODE) {
 				var normalizedNodeName = directiveNormalize(nodeName(node).toLowerCase());
-				addDirectives(directives, normalizedNodeName);
+				addDirectives(directives, normalizedNodeName, 'E');
 
 				// 收集属性上的指令
 				_.forEach(node.attributes, attr => {
@@ -117,27 +128,31 @@ export default function $compileProvider($provide) {
 						normalizedAttrName = normalizedAttrName[6].toLowerCase() + normalizedAttrName.substring(7);
 					}
 
-					addDirectives(directives, normalizedAttrName);
+					addDirectives(directives, normalizedAttrName, 'A');
 				});
 
 				// 收集 class 上的指令
 				_.forEach(node.classList, cls => {
 					var normalizedClassName = directiveNormalize(cls.toLowerCase());
-					addDirectives(directives, normalizedClassName);
+					addDirectives(directives, normalizedClassName, 'C');
 				});
 			} else if (node.nodeType === Node.COMMENT_NODE) {
 				var match = /^\s*directive\:\s*([\d\w\-_]+)/.exec(node.nodeValue);
 				if (match) {
-					addDirectives(directives, directiveNormalize(match[1]));
+					addDirectives(directives, directiveNormalize(match[1]), 'M');
 				}
 			}
 
 			return directives;
 		}
 
-		function addDirectives(directives, name) {
+		function addDirectives(directives, name, mode) {
 			if (hasDirectives.hasOwnProperty(name)) {
-				directives.push.apply(directives, $injector.get(name + 'Directive'));
+				let foundDirectives = $injector.get(name + 'Directive');
+				let applicableDirectives = _.filter(foundDirectives, d => {
+					return d.restrict.includes(mode);
+				});
+				directives.push.apply(directives, applicableDirectives);
 			}
 		}
 
