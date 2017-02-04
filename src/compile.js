@@ -65,6 +65,13 @@
  * 优先级值高, 先执行
  * 优先级相同, 比较指令名称
  * 指令名称也相同, 按照指令注册先后排序
+ *
+ * 10.terminal
+ * 终止指令继续编译
+ * 相同优先级的不会终止, 父指令会终止子指令
+ * 在 applyDirectivesToNode 方法中处理
+ *
+ * 11.Applying Directives Across Multiple Nodes
  * */
 import _ from 'lodash';
 import $ from 'jquery';
@@ -132,10 +139,10 @@ export default function $compileProvider($provide) {
 		function compileNodes($compileNodes) {
 			_.forEach($compileNodes, node => {
 				let directives = collectDirectives(node);
-				applyDirectivesToNode(directives, node);
+				var terminal = applyDirectivesToNode(directives, node);
 
 				// 支持嵌套
-				if (node.childNodes && node.childNodes.length !== 0) {
+				if (!terminal && node.childNodes && node.childNodes.length !== 0) {
 					compileNodes(node.childNodes);
 				}
 			});
@@ -188,11 +195,24 @@ export default function $compileProvider($provide) {
 
 		function applyDirectivesToNode(directives, node) {
 			var $compileNode = $(node);
+			var terminalPriority = -Number.MAX_VALUE;
+			var terminal = false;
 			_.forEach(directives, directive => {
+				// 优先级低于 terminal 指令的优先级时
+				if (directive.priority < terminalPriority) {
+					return false;
+				}
+
 				if (directive.compile) {
 					directive.compile($compileNode);
 				}
+				if (directive.terminal) {
+					terminalPriority = directive.terminal;
+					terminal = true;
+				}
 			});
+
+			return terminal;
 		}
 
 		return compile;
